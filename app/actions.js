@@ -2,9 +2,9 @@
 
 import { supabase } from '../lib/supabase';
 
-// ---- Custom Drills ----
+// ---- Drills ----
 
-export async function getCustomDrills() {
+export async function getDrills() {
   const { data, error } = await supabase
     .from('custom_drills')
     .select('*')
@@ -13,7 +13,7 @@ export async function getCustomDrills() {
   return data;
 }
 
-export async function createCustomDrill(drill) {
+export async function createDrill(drill) {
   const { data, error } = await supabase
     .from('custom_drills')
     .insert({
@@ -35,7 +35,30 @@ export async function createCustomDrill(drill) {
   return data;
 }
 
-export async function deleteCustomDrill(id) {
+export async function updateDrill(id, drill) {
+  const { data, error } = await supabase
+    .from('custom_drills')
+    .update({
+      name:        drill.name,
+      category:    drill.category,
+      duration:    drill.duration,
+      players:     drill.players,
+      icon:        drill.icon,
+      description: drill.desc,
+      theme:       drill.theme,
+      rules:       drill.rules,
+      how_to:      drill.howTo,
+      coaching:    drill.coaching,
+      teaching:    drill.teaching,
+    })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function deleteDrill(id) {
   const { error } = await supabase
     .from('custom_drills')
     .delete()
