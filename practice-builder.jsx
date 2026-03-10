@@ -1,5 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  getCustomDrills, createCustomDrill, deleteCustomDrill,
+  getSavedMenus, createSavedMenu, deleteSavedMenu,
+} from "./app/actions";
 
 const DRILL_LIBRARY = [
   // ウォームアップ
@@ -30,7 +34,6 @@ const DRILL_LIBRARY = [
     coaching: ["常に周りを見て逃げるルートを探す", "鬼は追い込む動きを仲間と連携して行う", "全力で取り組む"],
     teaching: ["低い重心で素早い方向転換", "フェイントを使って相手を惑わす", "加速・減速のメリハリをつける"],
   },
-
   // パス
   {
     id: 4, name: "2人組パス", category: "パス", duration: 10, players: "2人1組", icon: "✅",
@@ -54,7 +57,7 @@ const DRILL_LIBRARY = [
     id: 6, name: "菱形パス回し", category: "パス", duration: 15, players: "4人1組", icon: "♦️",
     desc: "ダイヤモンド形にコーンを置きパス&ムーブ",
     theme: "パスアンドムーブとポジショニング",
-    rules: "ダイヤモンド（菱形）に4つのマーカーを設置（各辺10m）。パスを出したら必ず動く。中央に1人サーバーを置いてもよい。",
+    rules: "ダイヤモンド（菱形）に4つのマーカーを設置（各辺10m）。パスを出したら必ず動く。",
     howTo: "①菱形にマーカーを設置 ②各頂点に選手を1人配置 ③右回りでパスしたら次の頂点へ走る ④3分ごとに方向を逆にする ⑤発展：中央の選手を経由するパターンを追加",
     coaching: ["パスの後に次のポジションへ積極的に動く", "受け手は常にボールに向かって動きながら受ける", "全体のリズムを合わせる"],
     teaching: ["パスと同時に走り出す（ワンツーの原理）", "受ける角度を工夫して相手に取られにくい体の向きを作る", "距離と強さを正確に合わせたパス"],
@@ -63,19 +66,18 @@ const DRILL_LIBRARY = [
     id: 7, name: "リターンパス", category: "パス", duration: 10, players: "2人1組", icon: "↩️",
     desc: "壁パス（ワンツー）の連続練習",
     theme: "ワンツーパスによる突破の習得",
-    rules: "1対0で行う。Aがパスを出しBがリターン。Aはリターンを受けてゴールへ向かう（またはマーカーを通過）。",
+    rules: "1対0で行う。Aがパスを出しBがリターン。Aはリターンを受けてゴールへ向かう。",
     howTo: "①AとBを7〜8m離れて配置 ②AがドリブルでアプローチしながらBへパス ③Bはワンタッチでリターン ④Aはリターンを受けてスペースへ抜ける ⑤2分で役割交代",
     coaching: ["パスを出すタイミングを早くする", "リターンを受けた後の動き出しを素早く", "声でワンツーを要求する"],
     teaching: ["斜め方向にパスしてリターンは裏へ", "ファーストタッチで相手を剥がす", "体の向きを意識してリターンを受ける"],
   },
-
   // ドリブル
   {
     id: 8, name: "コーンドリブル", category: "ドリブル", duration: 10, players: "個人", icon: "🔥",
     desc: "5本のコーンをジグザグドリブル",
     theme: "ボールタッチとボールコントロールの向上",
-    rules: "2m間隔でコーンを5本直線に並べる。ジグザグにドリブルして往復。足のどの部分を使ってもよい。",
-    howTo: "①2m間隔でコーンを5本設置 ②ボールを足元に置いてスタート ③ジグザグにコーンを交わしながらドリブル ④折り返してスタート地点に戻る ⑤インサイド、アウトサイド、インステップなど使う部位を変えてチャレンジ",
+    rules: "2m間隔でコーンを5本直線に並べる。ジグザグにドリブルして往復。",
+    howTo: "①2m間隔でコーンを5本設置 ②ジグザグにコーンを交わしながらドリブル ③折り返してスタート地点に戻る ④インサイド、アウトサイド、インステップなど使う部位を変えてチャレンジ",
     coaching: ["コーンに当てても気にせず続ける", "スピードより正確さを優先する", "ドリブルしながら顔を上げる意識を持つ"],
     teaching: ["ボールを体の近くに置く（ボールを離さない）", "細かいタッチで方向を変える", "軸足でしっかり踏み込んでから方向転換"],
   },
@@ -83,28 +85,27 @@ const DRILL_LIBRARY = [
     id: 9, name: "1対1", category: "ドリブル", duration: 15, players: "2人1組", icon: "⚔️",
     desc: "5m×10mのエリアで1対1突破",
     theme: "ドリブル突破とディフェンスの対人技術",
-    rules: "5m×10mのエリアを設定。攻撃側は相手を抜いてエンドラインを通過すれば得点。制限時間は30秒。攻守を交代して行う。",
+    rules: "5m×10mのエリアを設定。攻撃側は相手を抜いてエンドラインを通過すれば得点。制限時間は30秒。",
     howTo: "①マーカーでエリアを設定 ②攻撃側がボールを持ってスタート ③ディフェンスはエンドラインを守る ④30秒で攻守交代 ⑤3本ずつ行い成功数を競う",
-    coaching: ["攻撃：積極的に仕掛ける ②ディフェンス：簡単に抜かれない粘り強さ", "コンタクトを恐れずにチャレンジする", "失敗を恐れず積極的にフェイントを使う"],
+    coaching: ["攻撃：積極的に仕掛ける、ディフェンス：簡単に抜かれない粘り強さ", "コンタクトを恐れずにチャレンジする", "失敗を恐れず積極的にフェイントを使う"],
     teaching: ["攻撃：体重移動を使ったフェイント、コース取り", "ディフェンス：半身の姿勢、間合いの取り方", "ボールを足元に置きすぎず、少し前に出す"],
   },
   {
     id: 10, name: "ドリブルリレー", category: "ドリブル", duration: 10, players: "チーム", icon: "🏅",
     desc: "チームに分かれてドリブルリレー競争",
     theme: "ボールコントロールとチームの一体感",
-    rules: "2〜3チームに分かれる。折り返し地点まで20mのドリブルリレー。ボールをコントロールしながら素早く往復する。",
+    rules: "2〜3チームに分かれる。折り返し地点まで20mのドリブルリレー。",
     howTo: "①チームに分かれて1列に並ぶ ②先頭がドリブルでスタート ③折り返し地点（20m先）でUターン ④スタート地点に戻ったら次の選手に手渡し ⑤全員が終わったチームの勝ち",
     coaching: ["チームメイトを大きな声で応援する", "勝敗よりも正確なドリブルを意識する", "ルールを守って公正に競う"],
     teaching: ["切り返しをスムーズに行うためのステップワーク", "スピードに乗ったときのボールの置き場所", "加速時は大きなタッチ、減速・転換時は細かいタッチ"],
   },
-
   // シュート
   {
     id: 11, name: "シュート練習", category: "シュート", duration: 15, players: "全員", icon: "⚽",
     desc: "GKなしでコーナーにコーンゴール",
     theme: "シュートの精度と枠内シュート率の向上",
-    rules: "ペナルティエリア付近からシュート。コーンゴール（コーンを2本立てて幅2mのゴール）を狙う。1人3本ずつ。",
-    howTo: "①ゴールの4隅にコーンゴールを設置 ②ペナルティエリア付近にボールを置く ③コーチが「右コーナー」などコースを指示 ④選手はシュートを打つ ⑤3本打ったら後ろに並ぶ",
+    rules: "ペナルティエリア付近からシュート。コーンゴールを狙う。1人3本ずつ。",
+    howTo: "①ゴールの4隅にコーンゴールを設置 ②コーチが「右コーナー」などコースを指示 ③選手はシュートを打つ ④3本打ったら後ろに並ぶ",
     coaching: ["シュートのコースを考えてから打つ", "外しても気にしないでどんどん打つ", "GKがいると思ってコースを狙う"],
     teaching: ["インステップキックの正しい当て方（甲の部分）", "軸足の位置（ボールの横、少し後ろ）", "フォロースルーで高さをコントロール"],
   },
@@ -112,8 +113,8 @@ const DRILL_LIBRARY = [
     id: 12, name: "GKありシュート", category: "シュート", duration: 15, players: "全員", icon: "🥅",
     desc: "ペナルティエリアからのシュート",
     theme: "GKを意識したシュートの判断力と決定力",
-    rules: "GK付きで実施。シューターはペナルティエリア内からシュート。GKは通常のルールに従う。1人2本ずつ。",
-    howTo: "①GKをゴールに配置 ②シューターがペナルティエリア外からドリブルで入る ③GKの動きを見てシュートコースを選択 ④インサイドまたはインステップでシュート ⑤全員が2本打ったら次のラウンドへ",
+    rules: "GK付きで実施。シューターはペナルティエリア内からシュート。1人2本ずつ。",
+    howTo: "①GKをゴールに配置 ②シューターがペナルティエリア外からドリブルで入る ③GKの動きを見てシュートコースを選択 ④全員が2本打ったら次のラウンドへ",
     coaching: ["GKをよく見てからシュートを打つ", "コースが消えていたら無理に打たない勇気も大切", "GKは積極的に前に出てシュートコースを消す"],
     teaching: ["GKの立ち位置を確認するタイミング", "フェイントを入れてGKを動かしてからシュート", "GKの手が届かない場所（ニア下・ファー）を狙う"],
   },
@@ -121,19 +122,18 @@ const DRILL_LIBRARY = [
     id: 13, name: "クロス&シュート", category: "シュート", duration: 15, players: "全員", icon: "🎯",
     desc: "サイドからのクロスに合わせてシュート",
     theme: "クロスボールへの合わせ方とタイミング",
-    rules: "クロスを上げる選手とシュートを打つ選手に分かれる。クロスはファーサイドを目標に上げる。シューターはペナルティエリア内に走り込む。",
-    howTo: "①サイドにクロス要員、中央にシューター要員が並ぶ ②クロス要員がサイドを突破してクロス ③シューター要員は走り込みのタイミングを合わせる ④シュート後はポジションを入れ替える ⑤左右両サイドから行う",
+    rules: "クロスを上げる選手とシュートを打つ選手に分かれる。クロスはファーサイドを目標に上げる。",
+    howTo: "①サイドにクロス要員、中央にシューター要員が並ぶ ②クロス要員がサイドを突破してクロス ③シューター要員は走り込みのタイミングを合わせる ④シュート後はポジションを入れ替える",
     coaching: ["クロスを上げる選手と呼吸を合わせる", "ゴール前への積極的な走り込みを習慣にする", "シュートを打てなくても動き続ける"],
     teaching: ["走り込みのタイミング（クロスが出る前に動き出す）", "クロスボールへのヘディングとボレーの技術", "ニアとファーの使い分け"],
   },
-
   // ゲーム形式
   {
     id: 14, name: "3対3", category: "ゲーム", duration: 20, players: "6人", icon: "🟢",
     desc: "小さいゴールで素早い判断を養う",
     theme: "少人数での素早い判断とコンビネーション",
-    rules: "20m×20mのエリア。ミニゴール（またはコーンゴール）を使用。GKなし。オフサイドなし。出た場合は投げ入れまたはキックイン。",
-    howTo: "①エリアとゴールを設置 ②3対3で試合開始 ③ゴールが決まったらGKエリアからリスタート ④5分ゲームを2セット行う ⑤得点が多いチームの勝ち",
+    rules: "20m×20mのエリア。ミニゴールを使用。GKなし。オフサイドなし。",
+    howTo: "①エリアとゴールを設置 ②3対3で試合開始 ③ゴールが決まったらGKエリアからリスタート ④5分ゲームを2セット",
     coaching: ["ボールを持っていない時の動きを意識する", "プレッシャーに動じず冷静にプレーする", "チームで声を掛け合う"],
     teaching: ["数的優位を作るポジショニング", "プレスのかけ方と連動した守備", "狭いスペースでのターン・反転技術"],
   },
@@ -141,8 +141,8 @@ const DRILL_LIBRARY = [
     id: 15, name: "4対4", category: "ゲーム", duration: 20, players: "8人", icon: "🔵",
     desc: "ポゼッションを意識した形式",
     theme: "ボール保持とポジションバランスの意識",
-    rules: "30m×25mのエリア。フルゴール（またはコーンゴール）2つ。GKなし。ボールがエリア外に出たらキックイン。",
-    howTo: "①エリアとゴールを設置 ②4対4で試合開始 ③ポゼッション率を意識してゲームを行う ④7分ゲームを2セット ⑤コーチは動きの改善点を随時フィードバック",
+    rules: "30m×25mのエリア。フルゴール2つ。GKなし。ボールがエリア外に出たらキックイン。",
+    howTo: "①エリアとゴールを設置 ②4対4で試合開始 ③ポゼッション率を意識してゲームを行う ④7分ゲームを2セット",
     coaching: ["ボールを奪われたらすぐにプレスバック", "ボールを持ったら落ち着いてプレーする", "チームとしての約束事を守る"],
     teaching: ["ビルドアップ時のポジショニング（三角形を作る）", "プレスをかけるタイミングと方法", "サポートの距離と角度"],
   },
@@ -150,12 +150,11 @@ const DRILL_LIBRARY = [
     id: 16, name: "紅白戦", category: "ゲーム", duration: 30, players: "全員", icon: "🏆",
     desc: "実戦形式。今日の練習テーマを意識して",
     theme: "今日の練習テーマを試合で実践する",
-    rules: "通常のサッカールールに従う。ハンドは取らない（小学生対象の場合）。スローインあり。オフサイドは状況に応じて判断。",
+    rules: "通常のサッカールールに従う。ハンドは取らない（小学生対象の場合）。オフサイドは状況に応じて判断。",
     howTo: "①チームを均等に分ける ②コーチが今日のテーマを再確認 ③15分ハーフで試合 ④ハーフタイムにコーチから修正点を伝える ⑤試合後に振り返り",
     coaching: ["試合中でも声を出し続ける", "ミスを引きずらず次のプレーに集中する", "チームとして戦う意識を持つ"],
     teaching: ["今日練習したスキルを実戦で使う勇気", "状況に応じた判断（ドリブルかパスか）", "ゲームの流れを読む力"],
   },
-
   // クールダウン
   {
     id: 17, name: "静的ストレッチ", category: "クールダウン", duration: 8, players: "全員", icon: "🧘",
@@ -170,7 +169,7 @@ const DRILL_LIBRARY = [
     id: 18, name: "振り返りミーティング", category: "クールダウン", duration: 5, players: "全員", icon: "💬",
     desc: "今日の良かった点・改善点を共有",
     theme: "自己評価と次回への意識づけ",
-    rules: "全員が輪になって座る。コーチが進行。選手は積極的に発言する。批判はしない（改善提案はOK）。",
+    rules: "全員が輪になって座る。コーチが進行。選手は積極的に発言する。批判はしない。",
     howTo: "①輪になって座る ②コーチ：今日のテーマへの取り組みを振り返る ③コーチが良かった点を2〜3つ挙げる ④選手に「今日できたこと」を1人1言発表させる ⑤次回の練習への目標を1つ設定して終了",
     coaching: ["発言を恐れず、積極的に意見を言う", "仲間の発言をしっかり聞く", "目標は具体的に設定する"],
     teaching: ["自己評価の方法（良かった点・改善点）", "目標設定の仕方（具体的・測定可能）", "振り返りが上達に繋がる理由"],
@@ -187,6 +186,32 @@ const CAT_COLOR = {
   "ゲーム":       { bg: "#ede7f6", border: "#7c4dff", text: "#4a148c", dark: "#7c4dff" },
   "クールダウン": { bg: "#e0f7fa", border: "#00bcd4", text: "#006064", dark: "#00bcd4" },
 };
+
+const EMPTY_DRILL_FORM = {
+  name: "", category: "ウォームアップ", duration: 10,
+  players: "全員", icon: "⚽",
+  desc: "", theme: "", rules: "", howTo: "",
+  coaching: ["", "", ""],
+  teaching: ["", "", ""],
+};
+
+// DB row → component shape
+function normalizeCustomDrill(row) {
+  return {
+    ...row,
+    desc:   row.description,
+    howTo:  row.how_to,
+    isCustom: true,
+  };
+}
+
+function normalizeSavedMenu(row) {
+  return {
+    ...row,
+    totalTime: row.total_time,
+    savedAt:   row.saved_at,
+  };
+}
 
 function DetailSection({ icon, label, content }) {
   return (
@@ -222,26 +247,36 @@ function DetailListSection({ icon, label, items, color }) {
 export default function App() {
   const [menu, setMenu] = useState([]);
   const [selectedCat, setSelectedCat] = useState("ウォームアップ");
-  const [view, setView] = useState("build"); // build | preview | saved
+  const [view, setView] = useState("build");
   const [menuTitle, setMenuTitle] = useState("今日の練習メニュー");
   const [editingId, setEditingId] = useState(null);
   const [selectedDrill, setSelectedDrill] = useState(null);
-  const [savedMenus, setSavedMenus] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("practice_menus_v1") ?? "[]");
-    } catch {
-      return [];
-    }
-  });
   const [saveFlash, setSaveFlash] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const filteredDrills = DRILL_LIBRARY.filter(d => d.category === selectedCat);
+  // Supabase data
+  const [customDrills, setCustomDrills] = useState([]);
+  const [savedMenus, setSavedMenus] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Custom drill creation
+  const [showAddDrill, setShowAddDrill] = useState(false);
+  const [addDrillForm, setAddDrillForm] = useState(EMPTY_DRILL_FORM);
+  const [addDrillError, setAddDrillError] = useState("");
+  const [isCreatingDrill, setIsCreatingDrill] = useState(false);
+
+  useEffect(() => {
+    Promise.all([getCustomDrills(), getSavedMenus()])
+      .then(([drills, menus]) => {
+        setCustomDrills(drills.map(normalizeCustomDrill));
+        setSavedMenus(menus.map(normalizeSavedMenu));
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const allDrills = [...DRILL_LIBRARY, ...customDrills];
+  const filteredDrills = allDrills.filter(d => d.category === selectedCat);
   const totalTime = menu.reduce((sum, d) => sum + d.duration, 0);
-
-  const persistMenus = (next) => {
-    setSavedMenus(next);
-    localStorage.setItem("practice_menus_v1", JSON.stringify(next));
-  };
 
   const addDrill = (drill) => {
     setMenu(prev => [...prev, { ...drill, uid: Date.now() + Math.random(), note: "" }]);
@@ -265,18 +300,22 @@ export default function App() {
     setMenu(prev => prev.map(d => d.uid === uid ? { ...d, note } : d));
   };
 
-  const saveMenu = () => {
+  const openDetail = (drillId) => {
+    const drill = allDrills.find(d => d.id === drillId);
+    if (drill) setSelectedDrill(drill);
+  };
+
+  const saveMenu = async () => {
     if (menu.length === 0) return;
-    const newMenu = {
-      id: Date.now(),
-      title: menuTitle,
-      savedAt: new Date().toISOString(),
-      totalTime,
-      items: menu,
-    };
-    persistMenus([newMenu, ...savedMenus]);
-    setSaveFlash(true);
-    setTimeout(() => setSaveFlash(false), 2000);
+    setIsSaving(true);
+    try {
+      const row = await createSavedMenu({ title: menuTitle, totalTime, items: menu });
+      setSavedMenus(prev => [normalizeSavedMenu(row), ...prev]);
+      setSaveFlash(true);
+      setTimeout(() => setSaveFlash(false), 2000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const loadMenu = (sm) => {
@@ -285,13 +324,53 @@ export default function App() {
     setView("build");
   };
 
-  const deleteMenu = (id) => {
-    persistMenus(savedMenus.filter(m => m.id !== id));
+  const handleDeleteMenu = async (id) => {
+    await deleteSavedMenu(id);
+    setSavedMenus(prev => prev.filter(m => m.id !== id));
   };
 
-  const openDetail = (drillId) => {
-    const drill = DRILL_LIBRARY.find(d => d.id === drillId);
-    if (drill) setSelectedDrill(drill);
+  const handleDeleteCustomDrill = async (id) => {
+    await deleteCustomDrill(id);
+    setCustomDrills(prev => prev.filter(d => d.id !== id));
+  };
+
+  const handleCreateDrill = async () => {
+    if (!addDrillForm.name.trim()) {
+      setAddDrillError("ドリル名を入力してください");
+      return;
+    }
+    setIsCreatingDrill(true);
+    setAddDrillError("");
+    try {
+      const payload = {
+        ...addDrillForm,
+        duration: Number(addDrillForm.duration),
+        coaching: addDrillForm.coaching.filter(s => s.trim()),
+        teaching: addDrillForm.teaching.filter(s => s.trim()),
+      };
+      const row = await createCustomDrill(payload);
+      const normalized = normalizeCustomDrill(row);
+      setCustomDrills(prev => [...prev, normalized]);
+      setShowAddDrill(false);
+      setAddDrillForm(EMPTY_DRILL_FORM);
+      setSelectedCat(row.category);
+    } catch (e) {
+      setAddDrillError(e.message);
+    } finally {
+      setIsCreatingDrill(false);
+    }
+  };
+
+  const updateArrayField = (field, index, value) => {
+    setAddDrillForm(prev => {
+      const arr = [...prev[field]];
+      arr[index] = value;
+      return { ...prev, [field]: arr };
+    });
+  };
+
+  const addArrayItem = (field) => {
+    setAddDrillForm(prev => ({ ...prev, [field]: [...prev[field], ""] }));
   };
 
   return (
@@ -302,14 +381,10 @@ export default function App() {
         <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 3, fontWeight: 700, textTransform: "uppercase", marginBottom: 2 }}>Soccer Coach</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontSize: 19, fontWeight: 900, color: "#fff" }}>練習メニュービルダー</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ background: "#4caf5022", border: "1px solid #4caf5066", borderRadius: 8, padding: "4px 12px", fontSize: 13, fontWeight: 700, color: "#4caf50" }}>
-              ⏱ {totalTime}分
-            </div>
+          <div style={{ background: "#4caf5022", border: "1px solid #4caf5066", borderRadius: 8, padding: "4px 12px", fontSize: 13, fontWeight: 700, color: "#4caf50" }}>
+            ⏱ {totalTime}分
           </div>
         </div>
-
-        {/* View toggle */}
         <div style={{ display: "flex", marginTop: 12, background: "#ffffff18", borderRadius: 10, padding: 3, gap: 3 }}>
           {[
             { id: "build",   label: "🔧 ビルド" },
@@ -326,7 +401,6 @@ export default function App() {
       {/* BUILD VIEW */}
       {view === "build" && (
         <div>
-          {/* Current menu */}
           <div style={{ padding: "14px 16px 8px" }}>
             <div style={{ fontSize: 11, color: "#6b8fa8", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>
               メニュー ({menu.length}項目)
@@ -343,19 +417,14 @@ export default function App() {
               return (
                 <div key={drill.uid} style={{ background: "#fff", borderRadius: 12, marginBottom: 8, overflow: "hidden", border: `1px solid ${c.border}44`, boxShadow: "0 1px 4px #0001" }}>
                   <div style={{ display: "flex", alignItems: "center", padding: "10px 12px", gap: 10 }}>
-                    {/* Order buttons */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                       <button onClick={() => moveUp(i)} style={{ background: "none", border: "none", cursor: i === 0 ? "default" : "pointer", fontSize: 12, color: i === 0 ? "#ddd" : "#6b8fa8", padding: "1px 4px", lineHeight: 1 }}>▲</button>
                       <button onClick={() => moveDown(i)} style={{ background: "none", border: "none", cursor: i === menu.length-1 ? "default" : "pointer", fontSize: 12, color: i === menu.length-1 ? "#ddd" : "#6b8fa8", padding: "1px 4px", lineHeight: 1 }}>▼</button>
                     </div>
-
-                    {/* Number */}
                     <div style={{ fontSize: 13, fontWeight: 900, color: c.text, background: c.bg, borderRadius: 6, width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       {i + 1}
                     </div>
-
                     <div style={{ fontSize: 20, flexShrink: 0 }}>{drill.icon}</div>
-
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "#1a2a3a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{drill.name}</div>
                       <div style={{ display: "flex", gap: 6, marginTop: 2, alignItems: "center" }}>
@@ -364,15 +433,12 @@ export default function App() {
                         <span style={{ fontSize: 10, color: "#8aa" }}>👥{drill.players}</span>
                       </div>
                     </div>
-
                     <div style={{ display: "flex", gap: 4 }}>
                       <button onClick={() => openDetail(drill.id)} style={{ background: "#f0f4f8", border: "1px solid #dde8f0", borderRadius: 6, padding: "5px 7px", cursor: "pointer", fontSize: 11, fontWeight: 700, color: "#6b8fa8" }}>詳細</button>
                       <button onClick={() => setEditingId(editingId === drill.uid ? null : drill.uid)} style={{ background: editingId === drill.uid ? "#e3f2fd" : "#f0f4f8", border: "none", borderRadius: 6, padding: "5px 8px", cursor: "pointer", fontSize: 12 }}>✏️</button>
                       <button onClick={() => removeDrill(drill.uid)} style={{ background: "#fce4ec", border: "none", borderRadius: 6, padding: "5px 8px", cursor: "pointer", fontSize: 12 }}>✕</button>
                     </div>
                   </div>
-
-                  {/* Note editor */}
                   {editingId === drill.uid && (
                     <div style={{ padding: "0 12px 10px", borderTop: `1px solid ${c.border}22` }}>
                       <textarea
@@ -388,29 +454,23 @@ export default function App() {
             })}
           </div>
 
-          {/* Divider */}
           <div style={{ margin: "4px 16px 12px", borderTop: "1px solid #dde8f0" }} />
 
           {/* Drill Library */}
           <div style={{ padding: "0 16px 24px" }}>
             <div style={{ fontSize: 11, color: "#6b8fa8", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>ドリルを追加</div>
 
-            {/* Category tabs */}
             <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 12 }}>
               {CATEGORIES.map(cat => {
                 const c = CAT_COLOR[cat];
                 return (
                   <button key={cat} onClick={() => setSelectedCat(cat)} style={{
-                    flexShrink: 0,
-                    padding: "6px 12px",
+                    flexShrink: 0, padding: "6px 12px",
                     background: selectedCat === cat ? c.dark : "#fff",
                     border: `1.5px solid ${selectedCat === cat ? c.dark : "#dde8f0"}`,
-                    borderRadius: 20,
-                    fontSize: 11,
-                    fontWeight: 700,
+                    borderRadius: 20, fontSize: 11, fontWeight: 700,
                     color: selectedCat === cat ? "#fff" : "#6b8fa8",
-                    cursor: "pointer",
-                    transition: "all 0.15s",
+                    cursor: "pointer", transition: "all 0.15s",
                   }}>
                     {cat}
                   </button>
@@ -418,53 +478,66 @@ export default function App() {
               })}
             </div>
 
-            {/* Drill cards */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {filteredDrills.map(drill => {
-                const c = CAT_COLOR[drill.category];
-                const already = menu.filter(d => d.id === drill.id).length;
-                return (
-                  <div key={drill.id} style={{ background: "#fff", borderRadius: 12, border: `1px solid ${c.border}44`, overflow: "hidden", boxShadow: "0 1px 3px #0001" }}>
-                    <div style={{ display: "flex", alignItems: "center", padding: "12px 14px", gap: 12 }}>
-                      <div style={{ fontSize: 24, flexShrink: 0 }}>{drill.icon}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#1a2a3a" }}>{drill.name}</div>
-                        <div style={{ fontSize: 11, color: "#7a92a8", marginTop: 2, lineHeight: 1.4 }}>{drill.desc}</div>
-                        <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                          <span style={{ fontSize: 10, color: "#8aa", fontWeight: 600 }}>⏱ {drill.duration}分</span>
-                          <span style={{ fontSize: 10, color: "#8aa" }}>👥 {drill.players}</span>
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "20px", color: "#a0b8cc", fontSize: 13 }}>読み込み中...</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {filteredDrills.map(drill => {
+                  const c = CAT_COLOR[drill.category];
+                  const already = menu.filter(d => d.id === drill.id).length;
+                  return (
+                    <div key={drill.id} style={{ background: "#fff", borderRadius: 12, border: `1px solid ${c.border}44`, overflow: "hidden", boxShadow: "0 1px 3px #0001" }}>
+                      <div style={{ display: "flex", alignItems: "center", padding: "12px 14px", gap: 12 }}>
+                        <div style={{ fontSize: 24, flexShrink: 0 }}>{drill.icon}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: "#1a2a3a" }}>{drill.name}</div>
+                            {drill.isCustom && (
+                              <span style={{ fontSize: 9, background: "#e8f5e9", color: "#2e7d32", borderRadius: 4, padding: "1px 5px", fontWeight: 700 }}>オリジナル</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 11, color: "#7a92a8", marginTop: 2, lineHeight: 1.4 }}>{drill.desc}</div>
+                          <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                            <span style={{ fontSize: 10, color: "#8aa", fontWeight: 600 }}>⏱ {drill.duration}分</span>
+                            <span style={{ fontSize: 10, color: "#8aa" }}>👥 {drill.players}</span>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
+                          <button onClick={() => addDrill(drill)} style={{
+                            background: `linear-gradient(135deg, ${c.dark}, ${c.dark}cc)`,
+                            border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, fontSize: 20,
+                            width: 36, height: 36, cursor: "pointer", flexShrink: 0,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            boxShadow: `0 2px 8px ${c.dark}44`,
+                          }}>+</button>
+                          <div style={{ display: "flex", gap: 4 }}>
+                            <button onClick={() => setSelectedDrill(drill)} style={{ background: "#f0f4f8", border: "1px solid #dde8f0", borderRadius: 8, fontSize: 10, fontWeight: 700, color: "#6b8fa8", padding: "3px 8px", cursor: "pointer" }}>詳細</button>
+                            {drill.isCustom && (
+                              <button onClick={() => handleDeleteCustomDrill(drill.id)} style={{ background: "#fce4ec", border: "none", borderRadius: 8, fontSize: 10, fontWeight: 700, color: "#c62828", padding: "3px 8px", cursor: "pointer" }}>削除</button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
-                        <button onClick={() => addDrill(drill)} style={{
-                          background: `linear-gradient(135deg, ${c.dark}, ${c.dark}cc)`,
-                          border: "none", borderRadius: 10,
-                          color: "#fff", fontWeight: 700, fontSize: 20,
-                          width: 36, height: 36,
-                          cursor: "pointer", flexShrink: 0,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          boxShadow: `0 2px 8px ${c.dark}44`,
-                        }}>
-                          +
-                        </button>
-                        <button onClick={() => setSelectedDrill(drill)} style={{
-                          background: "#f0f4f8", border: "1px solid #dde8f0", borderRadius: 8,
-                          fontSize: 10, fontWeight: 700, color: "#6b8fa8",
-                          padding: "3px 10px", cursor: "pointer", whiteSpace: "nowrap",
-                        }}>
-                          詳細
-                        </button>
-                      </div>
+                      {already > 0 && (
+                        <div style={{ background: c.bg, padding: "3px 14px", fontSize: 10, color: c.text, fontWeight: 600 }}>
+                          ✓ メニューに{already}回追加済み
+                        </div>
+                      )}
                     </div>
-                    {already > 0 && (
-                      <div style={{ background: c.bg, padding: "3px 14px", fontSize: 10, color: c.text, fontWeight: 600 }}>
-                        ✓ メニューに{already}回追加済み
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+
+                {/* Add custom drill button */}
+                <button onClick={() => setShowAddDrill(true)} style={{
+                  marginTop: 4, width: "100%", padding: "13px",
+                  background: "#fff", border: "2px dashed #4caf5066",
+                  borderRadius: 12, color: "#2e7d32", fontSize: 13,
+                  fontWeight: 700, cursor: "pointer",
+                }}>
+                  ＋ オリジナルドリルを作成
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -472,14 +545,12 @@ export default function App() {
       {/* PREVIEW VIEW */}
       {view === "preview" && (
         <div style={{ padding: 16 }}>
-          {/* Title */}
           <input
             value={menuTitle}
             onChange={e => setMenuTitle(e.target.value)}
             style={{ width: "100%", fontSize: 18, fontWeight: 900, color: "#1a2a3a", border: "none", borderBottom: "2px solid #4caf50", background: "transparent", padding: "6px 0", marginBottom: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit" }}
           />
 
-          {/* Summary */}
           <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
             {[
               { label: "合計時間", value: `${totalTime}分`, icon: "⏱" },
@@ -493,7 +564,6 @@ export default function App() {
             ))}
           </div>
 
-          {/* Category time breakdown */}
           {menu.length > 0 && (
             <div style={{ background: "#fff", borderRadius: 12, padding: "14px 16px", marginBottom: 16, border: "1px solid #dde8f0" }}>
               <div style={{ fontSize: 11, color: "#6b8fa8", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>カテゴリ別時間</div>
@@ -505,7 +575,7 @@ export default function App() {
                   <div key={cat} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                     <div style={{ fontSize: 11, color: c.text, fontWeight: 700, width: 90, flexShrink: 0 }}>{cat}</div>
                     <div style={{ flex: 1, background: "#f0f4f8", borderRadius: 4, height: 8, overflow: "hidden" }}>
-                      <div style={{ width: `${(catTime / totalTime) * 100}%`, height: "100%", background: c.dark, borderRadius: 4, transition: "width 0.5s" }} />
+                      <div style={{ width: `${(catTime / totalTime) * 100}%`, height: "100%", background: c.dark, borderRadius: 4 }} />
                     </div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: c.text, width: 36, textAlign: "right" }}>{catTime}分</div>
                   </div>
@@ -514,7 +584,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Menu list */}
           {menu.length === 0 && (
             <div style={{ textAlign: "center", padding: "40px", color: "#a0b8cc", fontSize: 14, background: "#fff", borderRadius: 14, border: "2px dashed #c8d8e8" }}>
               ビルドタブでメニューを作成してください
@@ -529,14 +598,10 @@ export default function App() {
                   <div style={{ width: 5, background: c.dark, flexShrink: 0 }} />
                   <div style={{ padding: "12px 14px", flex: 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                      <div style={{ fontSize: 12, fontWeight: 900, color: "#fff", background: c.dark, borderRadius: 6, width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        {i + 1}
-                      </div>
+                      <div style={{ fontSize: 12, fontWeight: 900, color: "#fff", background: c.dark, borderRadius: 6, width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</div>
                       <span style={{ fontSize: 18 }}>{drill.icon}</span>
                       <div style={{ fontSize: 14, fontWeight: 800, color: "#1a2a3a", flex: 1 }}>{drill.name}</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: c.text, background: c.bg, borderRadius: 6, padding: "2px 8px" }}>
-                        {drill.duration}分
-                      </div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: c.text, background: c.bg, borderRadius: 6, padding: "2px 8px" }}>{drill.duration}分</div>
                       <button onClick={() => openDetail(drill.id)} style={{ background: "#f0f4f8", border: "1px solid #dde8f0", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontSize: 10, fontWeight: 700, color: "#6b8fa8" }}>詳細</button>
                     </div>
                     <div style={{ fontSize: 12, color: "#6b8fa8", marginLeft: 32, lineHeight: 1.5 }}>{drill.desc}</div>
@@ -545,7 +610,7 @@ export default function App() {
                         📝 {drill.note}
                       </div>
                     )}
-                    <div style={{ display: "flex", gap: 10, marginTop: 6, marginLeft: 32 }}>
+                    <div style={{ marginTop: 6, marginLeft: 32 }}>
                       <span style={{ fontSize: 10, color: "#8aa", fontWeight: 600 }}>👥 {drill.players}</span>
                     </div>
                   </div>
@@ -560,23 +625,14 @@ export default function App() {
                 <div style={{ fontSize: 13, color: "#4caf50", fontWeight: 700, marginBottom: 4 }}>🏁 練習終了</div>
                 <div style={{ fontSize: 12, color: "#ffffff88" }}>お疲れさまでした！合計 {totalTime}分</div>
               </div>
-
-              {/* Save button */}
-              <button onClick={saveMenu} style={{
-                marginTop: 12,
-                width: "100%",
-                padding: "14px",
+              <button onClick={saveMenu} disabled={isSaving} style={{
+                marginTop: 12, width: "100%", padding: "14px",
                 background: saveFlash ? "#43a047" : "linear-gradient(135deg, #2e7d32, #1b5e20)",
-                border: "none",
-                borderRadius: 14,
-                color: "#fff",
-                fontSize: 14,
-                fontWeight: 700,
-                cursor: "pointer",
-                transition: "background 0.3s",
+                border: "none", borderRadius: 14, color: "#fff", fontSize: 14, fontWeight: 700,
+                cursor: isSaving ? "default" : "pointer", opacity: isSaving ? 0.7 : 1,
                 boxShadow: "0 2px 12px #2e7d3244",
               }}>
-                {saveFlash ? "✅ 保存しました！" : "💾 このメニューを保存する"}
+                {isSaving ? "保存中..." : saveFlash ? "✅ 保存しました！" : "💾 このメニューを保存する"}
               </button>
             </>
           )}
@@ -590,7 +646,11 @@ export default function App() {
             保存済みメニュー ({savedMenus.length}件)
           </div>
 
-          {savedMenus.length === 0 && (
+          {loading && (
+            <div style={{ textAlign: "center", padding: "40px", color: "#a0b8cc", fontSize: 13 }}>読み込み中...</div>
+          )}
+
+          {!loading && savedMenus.length === 0 && (
             <div style={{ textAlign: "center", padding: "40px 20px", background: "#fff", borderRadius: 14, border: "2px dashed #c8d8e8", color: "#a0b8cc", fontSize: 13 }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>📁</div>
               まだ保存済みメニューがありません<br />
@@ -600,7 +660,6 @@ export default function App() {
 
           {savedMenus.map(sm => (
             <div key={sm.id} style={{ background: "#fff", borderRadius: 14, marginBottom: 12, border: "1px solid #dde8f0", overflow: "hidden", boxShadow: "0 1px 4px #0001" }}>
-              {/* Saved menu header */}
               <div style={{ padding: "12px 14px", borderBottom: "1px solid #f0f4f8" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -611,45 +670,29 @@ export default function App() {
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                    <button onClick={() => loadMenu(sm)} style={{
-                      background: "linear-gradient(135deg, #2e7d32, #1b5e20)",
-                      border: "none", borderRadius: 8, color: "#fff",
-                      fontSize: 11, fontWeight: 700, padding: "5px 10px", cursor: "pointer",
-                    }}>
+                    <button onClick={() => loadMenu(sm)} style={{ background: "linear-gradient(135deg, #2e7d32, #1b5e20)", border: "none", borderRadius: 8, color: "#fff", fontSize: 11, fontWeight: 700, padding: "5px 10px", cursor: "pointer" }}>
                       読み込む
                     </button>
-                    <button onClick={() => deleteMenu(sm.id)} style={{
-                      background: "#fce4ec", border: "none", borderRadius: 8,
-                      color: "#c62828", fontSize: 11, fontWeight: 700, padding: "5px 10px", cursor: "pointer",
-                    }}>
+                    <button onClick={() => handleDeleteMenu(sm.id)} style={{ background: "#fce4ec", border: "none", borderRadius: 8, color: "#c62828", fontSize: 11, fontWeight: 700, padding: "5px 10px", cursor: "pointer" }}>
                       削除
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Saved menu items */}
               {sm.items.map((item, i) => {
                 const c = CAT_COLOR[item.category];
-                const libraryDrill = DRILL_LIBRARY.find(d => d.id === item.id);
+                const libraryDrill = allDrills.find(d => d.id === item.id);
                 return (
                   <div key={item.uid} style={{ display: "flex", alignItems: "center", padding: "8px 14px", borderBottom: i < sm.items.length - 1 ? `1px solid ${c.border}22` : "none", gap: 8 }}>
-                    <div style={{ fontSize: 11, fontWeight: 900, color: c.text, background: c.bg, borderRadius: 4, width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      {i + 1}
-                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 900, color: c.text, background: c.bg, borderRadius: 4, width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</div>
                     <span style={{ fontSize: 16, flexShrink: 0 }}>{item.icon}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: "#1a2a3a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</div>
                       <div style={{ fontSize: 10, color: "#8aa" }}>{item.category} · {item.duration}分</div>
                     </div>
                     {libraryDrill && (
-                      <button onClick={() => setSelectedDrill(libraryDrill)} style={{
-                        background: "#f0f4f8", border: "1px solid #dde8f0",
-                        borderRadius: 6, fontSize: 10, fontWeight: 700,
-                        color: "#6b8fa8", padding: "3px 8px", cursor: "pointer", flexShrink: 0,
-                      }}>
-                        詳細
-                      </button>
+                      <button onClick={() => setSelectedDrill(libraryDrill)} style={{ background: "#f0f4f8", border: "1px solid #dde8f0", borderRadius: 6, fontSize: 10, fontWeight: 700, color: "#6b8fa8", padding: "3px 8px", cursor: "pointer", flexShrink: 0 }}>詳細</button>
                     )}
                   </div>
                 );
@@ -661,50 +704,135 @@ export default function App() {
 
       {/* DRILL DETAIL MODAL */}
       {selectedDrill && (
-        <div
-          onClick={() => setSelectedDrill(null)}
-          style={{
-            position: "fixed", inset: 0, background: "#000000aa", zIndex: 100,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            padding: 16,
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: "#fff", borderRadius: 20, width: "100%", maxWidth: 460,
-              maxHeight: "85vh", overflowY: "auto",
-              boxShadow: "0 8px 40px #0006",
-            }}
-          >
-            {/* Modal header */}
+        <div onClick={() => setSelectedDrill(null)} style={{ position: "fixed", inset: 0, background: "#000000aa", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 460, maxHeight: "85vh", overflowY: "auto", boxShadow: "0 8px 40px #0006" }}>
             <div style={{ background: CAT_COLOR[selectedDrill.category].dark, padding: "18px 20px 16px", borderRadius: "20px 20px 0 0", position: "sticky", top: 0 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
                   <div style={{ fontSize: 28, marginBottom: 4 }}>{selectedDrill.icon}</div>
                   <div style={{ fontSize: 19, fontWeight: 900, color: "#fff" }}>{selectedDrill.name}</div>
-                  <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                  <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
                     <span style={{ fontSize: 11, color: "#ffffff99", background: "#ffffff22", borderRadius: 6, padding: "2px 8px" }}>{selectedDrill.category}</span>
                     <span style={{ fontSize: 11, color: "#ffffff99", background: "#ffffff22", borderRadius: 6, padding: "2px 8px" }}>⏱ {selectedDrill.duration}分</span>
                     <span style={{ fontSize: 11, color: "#ffffff99", background: "#ffffff22", borderRadius: 6, padding: "2px 8px" }}>👥 {selectedDrill.players}</span>
+                    {selectedDrill.isCustom && <span style={{ fontSize: 11, color: "#fff", background: "#ffffff44", borderRadius: 6, padding: "2px 8px", fontWeight: 700 }}>オリジナル</span>}
                   </div>
                 </div>
-                <button
-                  onClick={() => setSelectedDrill(null)}
-                  style={{ background: "#ffffff33", border: "none", borderRadius: 8, color: "#fff", fontSize: 16, padding: "6px 12px", cursor: "pointer", flexShrink: 0 }}
-                >
-                  ✕
-                </button>
+                <button onClick={() => setSelectedDrill(null)} style={{ background: "#ffffff33", border: "none", borderRadius: 8, color: "#fff", fontSize: 16, padding: "6px 12px", cursor: "pointer", flexShrink: 0 }}>✕</button>
               </div>
             </div>
-
-            {/* Modal body */}
             <div style={{ padding: "18px 20px 24px" }}>
               <DetailSection icon="🎯" label="テーマ" content={selectedDrill.theme} />
               <DetailSection icon="📏" label="ルール" content={selectedDrill.rules} />
               <DetailSection icon="▶️" label="進め方" content={selectedDrill.howTo} />
-              <DetailListSection icon="🗣️" label="コーチングポイント" items={selectedDrill.coaching} color={CAT_COLOR[selectedDrill.category]} />
-              <DetailListSection icon="📚" label="ティーチングポイント" items={selectedDrill.teaching} color={CAT_COLOR[selectedDrill.category]} />
+              {selectedDrill.coaching?.length > 0 && <DetailListSection icon="🗣️" label="コーチングポイント" items={selectedDrill.coaching} color={CAT_COLOR[selectedDrill.category]} />}
+              {selectedDrill.teaching?.length > 0 && <DetailListSection icon="📚" label="ティーチングポイント" items={selectedDrill.teaching} color={CAT_COLOR[selectedDrill.category]} />}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADD CUSTOM DRILL MODAL */}
+      {showAddDrill && (
+        <div onClick={() => setShowAddDrill(false)} style={{ position: "fixed", inset: 0, background: "#000000aa", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 8px 40px #0006" }}>
+
+            {/* Modal header */}
+            <div style={{ background: "linear-gradient(135deg, #1a3a2a, #0f2d1f)", padding: "18px 20px", borderRadius: "20px 20px 0 0", position: "sticky", top: 0, zIndex: 1 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>オリジナルドリルを作成</div>
+                  <div style={{ fontSize: 11, color: "#ffffff66", marginTop: 2 }}>作成したドリルはサーバーに保存されます</div>
+                </div>
+                <button onClick={() => setShowAddDrill(false)} style={{ background: "#ffffff33", border: "none", borderRadius: 8, color: "#fff", fontSize: 16, padding: "6px 12px", cursor: "pointer" }}>✕</button>
+              </div>
+            </div>
+
+            <div style={{ padding: "20px" }}>
+              {/* 基本情報 */}
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#6b8fa8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>基本情報</div>
+
+              <FormField label="ドリル名 *">
+                <input value={addDrillForm.name} onChange={e => setAddDrillForm(p => ({ ...p, name: e.target.value }))}
+                  placeholder="例：シャドーストライカー" style={inputStyle} />
+              </FormField>
+
+              <div style={{ display: "flex", gap: 12 }}>
+                <FormField label="カテゴリ" style={{ flex: 1 }}>
+                  <select value={addDrillForm.category} onChange={e => setAddDrillForm(p => ({ ...p, category: e.target.value }))} style={{ ...inputStyle, appearance: "none" }}>
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </FormField>
+                <FormField label="時間（分）" style={{ flex: 1 }}>
+                  <input type="number" min={1} max={120} value={addDrillForm.duration} onChange={e => setAddDrillForm(p => ({ ...p, duration: e.target.value }))} style={inputStyle} />
+                </FormField>
+              </div>
+
+              <div style={{ display: "flex", gap: 12 }}>
+                <FormField label="人数" style={{ flex: 1 }}>
+                  <input value={addDrillForm.players} onChange={e => setAddDrillForm(p => ({ ...p, players: e.target.value }))}
+                    placeholder="全員、2人1組 など" style={inputStyle} />
+                </FormField>
+                <FormField label="アイコン" style={{ flex: "0 0 80px" }}>
+                  <input value={addDrillForm.icon} onChange={e => setAddDrillForm(p => ({ ...p, icon: e.target.value }))}
+                    style={{ ...inputStyle, textAlign: "center", fontSize: 20 }} maxLength={2} />
+                </FormField>
+              </div>
+
+              <FormField label="説明">
+                <textarea value={addDrillForm.desc} onChange={e => setAddDrillForm(p => ({ ...p, desc: e.target.value }))}
+                  placeholder="ドリルの概要を簡潔に" rows={2} style={{ ...inputStyle, resize: "vertical" }} />
+              </FormField>
+
+              <div style={{ margin: "16px 0 12px", borderTop: "1px solid #f0f4f8" }} />
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#6b8fa8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>詳細情報</div>
+
+              <FormField label="テーマ">
+                <input value={addDrillForm.theme} onChange={e => setAddDrillForm(p => ({ ...p, theme: e.target.value }))}
+                  placeholder="例：正確なパスと素早い判断" style={inputStyle} />
+              </FormField>
+
+              <FormField label="ルール">
+                <textarea value={addDrillForm.rules} onChange={e => setAddDrillForm(p => ({ ...p, rules: e.target.value }))}
+                  placeholder="ルールや制限事項を記述" rows={2} style={{ ...inputStyle, resize: "vertical" }} />
+              </FormField>
+
+              <FormField label="進め方">
+                <textarea value={addDrillForm.howTo} onChange={e => setAddDrillForm(p => ({ ...p, howTo: e.target.value }))}
+                  placeholder="①〜 ②〜 のように手順を記述" rows={3} style={{ ...inputStyle, resize: "vertical" }} />
+              </FormField>
+
+              <FormField label="コーチングポイント">
+                {addDrillForm.coaching.map((v, i) => (
+                  <input key={i} value={v} onChange={e => updateArrayField("coaching", i, e.target.value)}
+                    placeholder={`ポイント ${i + 1}`} style={{ ...inputStyle, marginBottom: 6 }} />
+                ))}
+                <button onClick={() => addArrayItem("coaching")} style={addItemBtnStyle}>＋ 追加</button>
+              </FormField>
+
+              <FormField label="ティーチングポイント">
+                {addDrillForm.teaching.map((v, i) => (
+                  <input key={i} value={v} onChange={e => updateArrayField("teaching", i, e.target.value)}
+                    placeholder={`ポイント ${i + 1}`} style={{ ...inputStyle, marginBottom: 6 }} />
+                ))}
+                <button onClick={() => addArrayItem("teaching")} style={addItemBtnStyle}>＋ 追加</button>
+              </FormField>
+
+              {addDrillError && (
+                <div style={{ background: "#fce4ec", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#c62828", marginBottom: 12 }}>
+                  {addDrillError}
+                </div>
+              )}
+
+              <button onClick={handleCreateDrill} disabled={isCreatingDrill} style={{
+                width: "100%", padding: "14px",
+                background: "linear-gradient(135deg, #2e7d32, #1b5e20)",
+                border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700,
+                cursor: isCreatingDrill ? "default" : "pointer", opacity: isCreatingDrill ? 0.7 : 1,
+                boxShadow: "0 2px 12px #2e7d3244",
+              }}>
+                {isCreatingDrill ? "保存中..." : "💾 ドリルを保存する"}
+              </button>
             </div>
           </div>
         </div>
@@ -712,3 +840,26 @@ export default function App() {
     </div>
   );
 }
+
+// Helper components for form
+function FormField({ label, children, style }) {
+  return (
+    <div style={{ marginBottom: 12, ...style }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#6b8fa8", marginBottom: 5 }}>{label}</div>
+      {children}
+    </div>
+  );
+}
+
+const inputStyle = {
+  width: "100%", padding: "9px 12px", borderRadius: 8,
+  border: "1px solid #dde8f0", fontSize: 13, color: "#1a2a3a",
+  outline: "none", boxSizing: "border-box", fontFamily: "inherit",
+  background: "#fafcff",
+};
+
+const addItemBtnStyle = {
+  background: "none", border: "1px dashed #c8d8e8", borderRadius: 6,
+  fontSize: 11, color: "#6b8fa8", fontWeight: 700, padding: "4px 10px",
+  cursor: "pointer", marginTop: 2,
+};
