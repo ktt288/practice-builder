@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "練習メニュービルダー",
+  title: "101FCコーチガイド",
   description: "サッカー練習メニューを簡単に作成できるツール",
 };
 
