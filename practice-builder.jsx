@@ -124,7 +124,9 @@ export default function App() {
   // Supabase data
   const [drills, setDrills] = useState([]);
   const [savedMenus, setSavedMenus] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingDrills, setLoadingDrills] = useState(true);
+  const [loadingMenus, setLoadingMenus] = useState(true);
+  const [loadingPhil, setLoadingPhil] = useState(true);
 
   // Detail modal
   const [selectedDrill, setSelectedDrill] = useState(null);
@@ -145,13 +147,9 @@ export default function App() {
   const [saveFlash, setSaveFlash] = useState(false);
 
   useEffect(() => {
-    Promise.all([getDrills(), getSavedMenus(), getPhilosophyItems()])
-      .then(([d, m, p]) => {
-        setDrills(d.map(normalizeDrill));
-        setSavedMenus(m.map(normalizeSavedMenu));
-        setPhilosophyItems(p.map(normalizePhilItem));
-      })
-      .finally(() => setLoading(false));
+    getDrills().then(d => setDrills(d.map(normalizeDrill))).finally(() => setLoadingDrills(false));
+    getSavedMenus().then(m => setSavedMenus(m.map(normalizeSavedMenu))).finally(() => setLoadingMenus(false));
+    getPhilosophyItems().then(p => setPhilosophyItems(p.map(normalizePhilItem))).finally(() => setLoadingPhil(false));
   }, []);
 
   const filteredDrills = drills.filter(d => d.category === selectedCat);
@@ -413,7 +411,7 @@ export default function App() {
               })}
             </div>
 
-            {loading ? (
+            {loadingDrills ? (
               <div style={{ textAlign: "center", padding: "32px", color: "#a0b8cc", fontSize: 13 }}>読み込み中...</div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -571,9 +569,9 @@ export default function App() {
             保存済みメニュー ({savedMenus.length}件)
           </div>
 
-          {loading && <div style={{ textAlign: "center", padding: "40px", color: "#a0b8cc", fontSize: 13 }}>読み込み中...</div>}
+          {loadingMenus && <div style={{ textAlign: "center", padding: "40px", color: "#a0b8cc", fontSize: 13 }}>読み込み中...</div>}
 
-          {!loading && savedMenus.length === 0 && (
+          {!loadingMenus && savedMenus.length === 0 && (
             <div style={{ textAlign: "center", padding: "40px 20px", background: "#fff", borderRadius: 14, border: "2px dashed #c8d8e8", color: "#a0b8cc", fontSize: 13 }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>📁</div>
               まだ保存済みメニューがありません<br />
@@ -623,8 +621,8 @@ export default function App() {
       {/* ===== SHISHIN VIEW ===== */}
       {view === "shishin" && (
         <div style={{ padding: "8px 0 32px" }}>
-          {loading && <div style={{ textAlign: "center", padding: "40px", color: "#a0b8cc", fontSize: 13 }}>読み込み中...</div>}
-          {!loading && Object.entries(PHIL_TYPES).map(([type, cfg]) => {
+          {loadingPhil && <div style={{ textAlign: "center", padding: "40px", color: "#a0b8cc", fontSize: 13 }}>読み込み中...</div>}
+          {!loadingPhil && Object.entries(PHIL_TYPES).map(([type, cfg]) => {
             const items = philosophyItems.filter(p => p.type === type);
             return (
               <div key={type} style={{ marginBottom: 8 }}>
