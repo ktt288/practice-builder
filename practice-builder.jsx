@@ -107,7 +107,7 @@ function FormField({ label, children }) {
 
 const inputStyle = {
   width: "100%", padding: "9px 12px", borderRadius: 8,
-  border: "1px solid #dde8f0", fontSize: 13, color: "#1a2a3a",
+  border: "1px solid #dde8f0", fontSize: 16, color: "#1a2a3a",
   outline: "none", boxSizing: "border-box", fontFamily: "inherit",
   background: "#fafcff",
 };
@@ -380,7 +380,7 @@ export default function App() {
                         value={drill.note}
                         onChange={e => updateNote(drill.uid, e.target.value)}
                         placeholder="コーチメモ（ポイント・注意事項など）"
-                        style={{ width: "100%", minHeight: 56, padding: "8px 10px", borderRadius: 8, border: "1px solid #c8d8e8", fontSize: 12, color: "#1a2a3a", resize: "vertical", outline: "none", boxSizing: "border-box", fontFamily: "inherit", marginTop: 8 }}
+                        style={{ width: "100%", minHeight: 56, padding: "8px 10px", borderRadius: 8, border: "1px solid #c8d8e8", fontSize: 16, color: "#1a2a3a", resize: "vertical", outline: "none", boxSizing: "border-box", fontFamily: "inherit", marginTop: 8 }}
                       />
                     </div>
                   )}
