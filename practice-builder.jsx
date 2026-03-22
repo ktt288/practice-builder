@@ -117,7 +117,7 @@ const inputStyle = {
 export default function App() {
   const [menu, setMenu] = useState([]);
   const [selectedCat, setSelectedCat] = useState("ウォームアップ");
-  const [view, setView] = useState("build");
+  const [view, setView] = useState("shishin");
   const [menuTitle, setMenuTitle] = useState("今日の練習メニュー");
   const [editingNoteId, setEditingNoteId] = useState(null);
 
