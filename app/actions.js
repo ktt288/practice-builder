@@ -98,3 +98,54 @@ export async function deleteSavedMenu(id) {
     .eq('id', id);
   if (error) throw new Error(error.message);
 }
+
+// ---- Philosophy Items ----
+
+export async function getPhilosophyItems() {
+  const { data, error } = await supabase
+    .from('philosophy_items')
+    .select('*')
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function createPhilosophyItem(item) {
+  const { data, error } = await supabase
+    .from('philosophy_items')
+    .insert({
+      type:       item.type,
+      title:      item.title,
+      content:    item.content,
+      year_label: item.yearLabel || '',
+      sort_order: item.sortOrder || 0,
+    })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updatePhilosophyItem(id, item) {
+  const { data, error } = await supabase
+    .from('philosophy_items')
+    .update({
+      title:      item.title,
+      content:    item.content,
+      year_label: item.yearLabel || '',
+    })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function deletePhilosophyItem(id) {
+  const { error } = await supabase
+    .from('philosophy_items')
+    .delete()
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+}

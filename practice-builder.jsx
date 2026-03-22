@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import {
   getDrills, createDrill, updateDrill, deleteDrill,
   getSavedMenus, createSavedMenu, deleteSavedMenu,
+  getPhilosophyItems, createPhilosophyItem, updatePhilosophyItem, deletePhilosophyItem,
 } from "./app/actions";
 
 const CATEGORIES = ["ウォームアップ", "パス", "ドリブル", "シュート", "ゲーム", "クールダウン"];
@@ -24,9 +25,20 @@ const EMPTY_FORM = {
   teaching: ["", "", ""],
 };
 
+const PHIL_TYPES = {
+  vision:    { label: "チームビジョン",  icon: "🎯", color: "#2e7d32", bg: "#e8f5e9", desc: "チームとして目指す姿・方向性" },
+  trait:     { label: "目指す選手像",    icon: "⭐", color: "#1565c0", bg: "#e3f2fd", desc: "選手に身につけてほしい資質・能力" },
+  milestone: { label: "成長の目安",      icon: "📈", color: "#e65100", bg: "#fff3e0", desc: "年次・カテゴリ別の到達目標" },
+  phrase:    { label: "チームの言葉",    icon: "💬", color: "#4a148c", bg: "#ede7f6", desc: "コーチが繰り返し伝える文化・精神" },
+};
+
 // DB row → component shape
 function normalizeDrill(row) {
   return { ...row, desc: row.description, howTo: row.how_to };
+}
+
+function normalizePhilItem(row) {
+  return { ...row, yearLabel: row.year_label };
 }
 
 function normalizeSavedMenu(row) {
@@ -122,15 +134,22 @@ export default function App() {
   const [drillFormError, setDrillFormError] = useState("");
   const [isSavingDrill, setIsSavingDrill] = useState(false);
 
+  // Philosophy
+  const [philosophyItems, setPhilosophyItems] = useState([]);
+  const [philForm, setPhilForm] = useState(null); // null | { mode, type, id?, form }
+  const [philFormError, setPhilFormError] = useState("");
+  const [isSavingPhil, setIsSavingPhil] = useState(false);
+
   // Menu save
   const [isSavingMenu, setIsSavingMenu] = useState(false);
   const [saveFlash, setSaveFlash] = useState(false);
 
   useEffect(() => {
-    Promise.all([getDrills(), getSavedMenus()])
-      .then(([d, m]) => {
+    Promise.all([getDrills(), getSavedMenus(), getPhilosophyItems()])
+      .then(([d, m, p]) => {
         setDrills(d.map(normalizeDrill));
         setSavedMenus(m.map(normalizeSavedMenu));
+        setPhilosophyItems(p.map(normalizePhilItem));
       })
       .finally(() => setLoading(false));
   }, []);
@@ -242,6 +261,44 @@ export default function App() {
     }
   };
 
+  // ---- Philosophy form ----
+  const openPhilForm = (type) => {
+    setPhilFormError("");
+    setPhilForm({ mode: "create", type, form: { title: "", content: "", yearLabel: "" } });
+  };
+
+  const openEditPhilForm = (item) => {
+    setPhilFormError("");
+    setPhilForm({ mode: "edit", type: item.type, id: item.id, form: { title: item.title, content: item.content || "", yearLabel: item.yearLabel || "" } });
+  };
+
+  const submitPhilForm = async () => {
+    const { mode, type, id, form } = philForm;
+    if (!form.title.trim()) { setPhilFormError("タイトルを入力してください"); return; }
+    setIsSavingPhil(true);
+    setPhilFormError("");
+    try {
+      if (mode === "create") {
+        const maxOrder = philosophyItems.filter(p => p.type === type).reduce((m, p) => Math.max(m, p.sort_order || 0), 0);
+        const row = await createPhilosophyItem({ ...form, type, sortOrder: maxOrder + 1 });
+        setPhilosophyItems(prev => [...prev, normalizePhilItem(row)]);
+      } else {
+        const row = await updatePhilosophyItem(id, form);
+        setPhilosophyItems(prev => prev.map(p => p.id === id ? normalizePhilItem(row) : p));
+      }
+      setPhilForm(null);
+    } catch (e) {
+      setPhilFormError(e.message);
+    } finally {
+      setIsSavingPhil(false);
+    }
+  };
+
+  const handleDeletePhilItem = async (id) => {
+    await deletePhilosophyItem(id);
+    setPhilosophyItems(prev => prev.filter(p => p.id !== id));
+  };
+
   const handleDeleteDrill = async (id) => {
     await deleteDrill(id);
     setDrills(prev => prev.filter(d => d.id !== id));
@@ -266,6 +323,7 @@ export default function App() {
             { id: "build",   label: "🔧 ビルド" },
             { id: "preview", label: "📋 確認" },
             { id: "saved",   label: "📁 保存済み" },
+            { id: "shishin", label: "🧭 指針" },
           ].map(v => (
             <button key={v.id} onClick={() => setView(v.id)} style={{ flex: 1, padding: "7px", background: view === v.id ? "#fff" : "none", border: "none", borderRadius: 8, color: view === v.id ? "#1a3a2a" : "#ffffff88", fontWeight: view === v.id ? 700 : 400, fontSize: 11, cursor: "pointer", transition: "all 0.2s" }}>
               {v.label}
@@ -561,6 +619,121 @@ export default function App() {
           ))}
         </div>
       )}
+
+      {/* ===== SHISHIN VIEW ===== */}
+      {view === "shishin" && (
+        <div style={{ padding: "8px 0 32px" }}>
+          {loading && <div style={{ textAlign: "center", padding: "40px", color: "#a0b8cc", fontSize: 13 }}>読み込み中...</div>}
+          {!loading && Object.entries(PHIL_TYPES).map(([type, cfg]) => {
+            const items = philosophyItems.filter(p => p.type === type);
+            return (
+              <div key={type} style={{ marginBottom: 8 }}>
+                <div style={{ padding: "14px 16px 8px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 900, color: cfg.color }}>{cfg.icon} {cfg.label}</div>
+                    <div style={{ fontSize: 11, color: "#8aa", marginTop: 2 }}>{cfg.desc}</div>
+                  </div>
+                  <button onClick={() => openPhilForm(type)} style={{ background: cfg.color, border: "none", borderRadius: 8, color: "#fff", fontSize: 11, fontWeight: 700, padding: "5px 10px", cursor: "pointer", flexShrink: 0 }}>＋ 追加</button>
+                </div>
+                <div style={{ padding: "0 16px" }}>
+                  {items.length === 0 && (
+                    <div style={{ textAlign: "center", padding: "14px", background: "#fff", borderRadius: 10, border: "2px dashed #c8d8e8", color: "#a0b8cc", fontSize: 12 }}>
+                      まだ登録されていません
+                    </div>
+                  )}
+                  {items.map(item => (
+                    <div key={item.id} style={{ background: "#fff", borderRadius: 12, marginBottom: 8, overflow: "hidden", border: `1px solid ${cfg.color}33`, boxShadow: "0 1px 4px #0001" }}>
+                      {type === "phrase" ? (
+                        <div style={{ padding: "14px 16px" }}>
+                          <div style={{ fontSize: 18, fontWeight: 900, color: cfg.color, marginBottom: 6, lineHeight: 1.4 }}>「{item.title}」</div>
+                          {item.content && <div style={{ fontSize: 13, color: "#3a4a5a", lineHeight: 1.7, background: cfg.bg, borderRadius: 8, padding: "8px 12px", marginBottom: 8 }}>{item.content}</div>}
+                          <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                            <button onClick={() => openEditPhilForm(item)} style={{ background: "#e3f2fd", border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, color: "#1565c0", padding: "4px 10px", cursor: "pointer" }}>編集</button>
+                            <button onClick={() => handleDeletePhilItem(item.id)} style={{ background: "#fce4ec", border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, color: "#c62828", padding: "4px 10px", cursor: "pointer" }}>削除</button>
+                          </div>
+                        </div>
+                      ) : type === "milestone" ? (
+                        <div style={{ display: "flex", alignItems: "stretch" }}>
+                          <div style={{ width: 5, background: cfg.color, flexShrink: 0 }} />
+                          <div style={{ padding: "12px 14px", flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 4 }}>
+                              {item.yearLabel && <span style={{ fontSize: 11, fontWeight: 700, color: cfg.color, background: cfg.bg, borderRadius: 6, padding: "2px 8px", flexShrink: 0 }}>{item.yearLabel}</span>}
+                              <div style={{ fontSize: 13, fontWeight: 700, color: "#1a2a3a", flex: 1 }}>{item.title}</div>
+                            </div>
+                            {item.content && <div style={{ fontSize: 12, color: "#5a6a7a", lineHeight: 1.6, paddingLeft: item.yearLabel ? 0 : 0 }}>{item.content}</div>}
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginTop: 8 }}>
+                              <button onClick={() => openEditPhilForm(item)} style={{ background: "#e3f2fd", border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, color: "#1565c0", padding: "4px 10px", cursor: "pointer" }}>編集</button>
+                              <button onClick={() => handleDeletePhilItem(item.id)} style={{ background: "#fce4ec", border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, color: "#c62828", padding: "4px 10px", cursor: "pointer" }}>削除</button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ padding: "12px 14px" }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: "#1a2a3a", marginBottom: 4 }}>{item.title}</div>
+                          {item.content && <div style={{ fontSize: 12, color: "#5a6a7a", lineHeight: 1.6, marginBottom: 8 }}>{item.content}</div>}
+                          <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                            <button onClick={() => openEditPhilForm(item)} style={{ background: "#e3f2fd", border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, color: "#1565c0", padding: "4px 10px", cursor: "pointer" }}>編集</button>
+                            <button onClick={() => handleDeletePhilItem(item.id)} style={{ background: "#fce4ec", border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, color: "#c62828", padding: "4px 10px", cursor: "pointer" }}>削除</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ margin: "8px 16px 0", borderBottom: "1px solid #e8f0f8" }} />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ===== PHIL FORM MODAL ===== */}
+      {philForm && (() => {
+        const cfg = PHIL_TYPES[philForm.type];
+        const isPhrase = philForm.type === "phrase";
+        const isMilestone = philForm.type === "milestone";
+        return (
+          <div onClick={() => setPhilForm(null)} style={{ position: "fixed", inset: 0, background: "#000000aa", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 8px 40px #0006" }}>
+              <div style={{ background: cfg.color, padding: "18px 20px", borderRadius: "20px 20px 0 0", position: "sticky", top: 0, zIndex: 1 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>
+                      {cfg.icon} {philForm.mode === "create" ? `${cfg.label}を追加` : `${cfg.label}を編集`}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#ffffff99", marginTop: 2 }}>変更はサーバーに保存されます</div>
+                  </div>
+                  <button onClick={() => setPhilForm(null)} style={{ background: "#ffffff33", border: "none", borderRadius: 8, color: "#fff", fontSize: 16, padding: "6px 12px", cursor: "pointer" }}>✕</button>
+                </div>
+              </div>
+              <div style={{ padding: "20px" }}>
+                {isMilestone && (
+                  <FormField label="年次・カテゴリ（例：U8、小学1年）">
+                    <input value={philForm.form.yearLabel} onChange={e => setPhilForm(prev => ({ ...prev, form: { ...prev.form, yearLabel: e.target.value } }))} placeholder="U8、U10、小学1年など" style={inputStyle} />
+                  </FormField>
+                )}
+                <FormField label={isPhrase ? "言葉・フレーズ *" : "タイトル *"}>
+                  <input value={philForm.form.title} onChange={e => setPhilForm(prev => ({ ...prev, form: { ...prev.form, title: e.target.value } }))} placeholder={isPhrase ? "例：ボールは宝物" : "例：テクニカルな選手"} style={inputStyle} />
+                </FormField>
+                <FormField label={isPhrase ? "解説・使い方" : "詳細・説明"}>
+                  <textarea value={philForm.form.content} onChange={e => setPhilForm(prev => ({ ...prev, form: { ...prev.form, content: e.target.value } }))} placeholder={isPhrase ? "どんな場面で伝えるか、なぜ大切かを記述" : "詳細な説明や具体的な行動指針"} rows={4} style={{ ...inputStyle, resize: "vertical" }} />
+                </FormField>
+                {philFormError && (
+                  <div style={{ background: "#fce4ec", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#c62828", marginBottom: 12 }}>{philFormError}</div>
+                )}
+                <button onClick={submitPhilForm} disabled={isSavingPhil} style={{
+                  width: "100%", padding: "14px",
+                  background: cfg.color, border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700,
+                  cursor: isSavingPhil ? "default" : "pointer", opacity: isSavingPhil ? 0.7 : 1,
+                  boxShadow: `0 2px 12px ${cfg.color}44`,
+                }}>
+                  {isSavingPhil ? "保存中..." : "💾 保存する"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ===== DETAIL MODAL ===== */}
       {selectedDrill && (
