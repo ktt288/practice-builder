@@ -311,19 +311,19 @@ export default function App() {
 
       {/* Header */}
       <div style={{ background: "linear-gradient(135deg, #1a3a2a 0%, #0f2d1f 100%)", padding: "18px 20px 14px", position: "sticky", top: 0, zIndex: 20, boxShadow: "0 2px 12px #0008" }}>
-        <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 3, fontWeight: 700, textTransform: "uppercase", marginBottom: 2 }}>Soccer Coach</div>
+        <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 3, fontWeight: 700, textTransform: "uppercase", marginBottom: 2 }}>101FC</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontSize: 19, fontWeight: 900, color: "#fff" }}>練習メニュービルダー</div>
+          <div style={{ fontSize: 19, fontWeight: 900, color: "#fff" }}>コーチガイド（101FCのDNA）</div>
           <div style={{ background: "#4caf5022", border: "1px solid #4caf5066", borderRadius: 8, padding: "4px 12px", fontSize: 13, fontWeight: 700, color: "#4caf50" }}>
             ⏱ {totalTime}分
           </div>
         </div>
         <div style={{ display: "flex", marginTop: 12, background: "#ffffff18", borderRadius: 10, padding: 3, gap: 3 }}>
           {[
+            { id: "shishin", label: "🧭 指針" },
             { id: "build",   label: "🔧 ビルド" },
             { id: "preview", label: "📋 確認" },
             { id: "saved",   label: "📁 保存済み" },
-            { id: "shishin", label: "🧭 指針" },
           ].map(v => (
             <button key={v.id} onClick={() => setView(v.id)} style={{ flex: 1, padding: "7px", background: view === v.id ? "#fff" : "none", border: "none", borderRadius: 8, color: view === v.id ? "#1a3a2a" : "#ffffff88", fontWeight: view === v.id ? 700 : 400, fontSize: 11, cursor: "pointer", transition: "all 0.2s" }}>
               {v.label}
