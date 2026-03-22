@@ -114,7 +114,7 @@ const inputStyle = {
 
 // ---- Main App ----
 
-export default function App() {
+export default function App({ initialPhilosophyItems = [] }) {
   const [menu, setMenu] = useState([]);
   const [selectedCat, setSelectedCat] = useState("ウォームアップ");
   const [view, setView] = useState("shishin");
@@ -126,7 +126,7 @@ export default function App() {
   const [savedMenus, setSavedMenus] = useState([]);
   const [loadingDrills, setLoadingDrills] = useState(true);
   const [loadingMenus, setLoadingMenus] = useState(true);
-  const [loadingPhil, setLoadingPhil] = useState(true);
+  const [loadingPhil, setLoadingPhil] = useState(initialPhilosophyItems.length === 0);
 
   // Detail modal
   const [selectedDrill, setSelectedDrill] = useState(null);
@@ -137,7 +137,7 @@ export default function App() {
   const [isSavingDrill, setIsSavingDrill] = useState(false);
 
   // Philosophy
-  const [philosophyItems, setPhilosophyItems] = useState([]);
+  const [philosophyItems, setPhilosophyItems] = useState(() => initialPhilosophyItems.map(normalizePhilItem));
   const [philForm, setPhilForm] = useState(null); // null | { mode, type, id?, form }
   const [philFormError, setPhilFormError] = useState("");
   const [isSavingPhil, setIsSavingPhil] = useState(false);
@@ -149,7 +149,6 @@ export default function App() {
   useEffect(() => {
     getDrills().then(d => setDrills(d.map(normalizeDrill))).finally(() => setLoadingDrills(false));
     getSavedMenus().then(m => setSavedMenus(m.map(normalizeSavedMenu))).finally(() => setLoadingMenus(false));
-    getPhilosophyItems().then(p => setPhilosophyItems(p.map(normalizePhilItem))).finally(() => setLoadingPhil(false));
   }, []);
 
   const filteredDrills = drills.filter(d => d.category === selectedCat);

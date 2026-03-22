@@ -1,3 +1,7 @@
+import { getPhilosophyItems } from "./actions";
 import App from "../practice-builder";
 
-export default App;
+export default async function Page() {
+  const philosophyItems = await getPhilosophyItems();
+  return <App initialPhilosophyItems={philosophyItems} />;
+}
